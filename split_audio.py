@@ -8,7 +8,10 @@ import numpy as np
 
 min_time = 1200
 max_time = 5000
-hop_s = 1024 
+#hop_s = 1024 
+hop_s = 256
+win_s = 1024
+#win_s = 4096
 
 logging.basicConfig(level=logging.INFO)
 
@@ -20,8 +23,8 @@ class Kernel():
         self.seq=[]
         self.filelist= listname
         self.out_prefix = out
-        self.min_seq = min_time * hop_s / 22050 
-        self.max_seq = max_time * hop_s / 22050 
+        self.min_seq = min_time * 22050 / (hop_s * 1000) 
+        self.max_seq = max_time * 22050 / (hop_s * 1000)  
         self.out_file = '%s_sample_0.wav' % (out)
         self.snk = sink(self.out_file,  samplerate=22050, channels=1)
         logging.info('kernel: min=%s max=%s' % (self.min_seq, self.max_seq))
@@ -44,13 +47,30 @@ class Kernel():
         with open(self.filelist, 'a') as fh:
             print ('%s|%s' % ( self.out_file, self.seq), file=fh)
 
-def slice_audio(audio_file, out_prefix, filelist_name):
+#def slice_audio_fix(audio_file, out_prefix, filelist_name, **kwargs):
+#    #import pdb;pdb.set_trace()
+#    if 'bpm' in kwargs and 'beats' in kwargs:
+#        split_time = 60000 / float(kwargs['pbm'] * kwargs['beats'] 
+#    elif 'split_time' in kwargs:
+#        split_time = kwargs['split_time']
+#    split_samples = split_time * 22050 / 1000
+#    
+#    
+#    seq = audio_to_seq(audio_file, **kwargs)
+#    samplerate=22050
+#    split_hops = split_samples
+#    s = source(audio_file, samplerate, split_samples)
+#    i=0
+#    cnts={}
+#    #print(seq)
+ 
+
+def slice_audio(audio_file, out_prefix, filelist_name, **kwargs):
     #import pdb;pdb.set_trace()
-    seq = audio_to_seq(audio_file)
+    seq = audio_to_seq(audio_file, **kwargs)
     k=Kernel(out_prefix, filelist_name)
-    samplerate = 22050 
-    hop_s = 1024  # hop size
-    s = source(audio_file, samplerate, hop_s)
+    samplerate=22050
+    s = source(audio_file, samplerate, kwargs['hop_s'])
     i=0
     cnts={}
     #print(seq)
@@ -114,11 +134,13 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--input', type=str, help='input audio file')
     parser.add_argument('-o', '--output', type=str, help='output file prefix. Files will be stored to prefix_samplexxx.wav')
     parser.add_argument('-l', '--list', type=str, default='filelist.txt', help='output filelist')
+    parser.add_argument('-s', '--seq_len', type=float, default='0', help='sequent length')
     parser.add_argument('--hparams', type=str,
                         required=False, help='comma separated name=value pairs')
 
     args = parser.parse_args()
     #hparams = create_hparams(args.hparams)
     #print (hparams)
-    slice_audio(args.input, args.output, args.list)
+    #hop_length=256,win_length=1024
+    slice_audio(args.input, args.output, args.list, hop_s=hop_s, win_s=win_s, seq_len=args.seq_len)
 

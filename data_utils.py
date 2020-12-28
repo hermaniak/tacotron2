@@ -7,7 +7,6 @@ import layers
 from utils import load_wav_to_torch, load_filepaths_and_text
 from text import text_to_sequence
 
-
 class TextMelLoader(torch.utils.data.Dataset):
     """
         1) loads audio,text pairs
@@ -30,9 +29,20 @@ class TextMelLoader(torch.utils.data.Dataset):
     def get_mel_text_pair(self, audiopath_and_text):
         # separate filename and text
         audiopath, text = audiopath_and_text[0], audiopath_and_text[1]
-        text = self.get_text(text)
+         
+        #text = self.get_text(text)
+        #print( self.get_text('this is a test'))
+        #pitch = self.get_pitch(audiopath)
+        if text == '':
+            print('Warning, file %s has no sequence' % audiopath)   
+            pitch = torch.IntTensor([1])
+        else:
+            pitch = torch.IntTensor(self.get_pitch(text))
         mel = self.get_mel(audiopath)
-        return (text, mel)
+        #print('text: %s' % text)
+        #print('pitch: %s' % pitch)
+        #return (text, mel)
+        return (pitch, mel)
 
     def get_mel(self, filename):
         if not self.load_mel_from_disk:
@@ -52,6 +62,15 @@ class TextMelLoader(torch.utils.data.Dataset):
                     melspec.size(0), self.stft.n_mel_channels))
 
         return melspec
+
+    def __get_pitch(self, filename):
+        seq = audio_to_seq(filename)
+        return torch.IntTensor(seq[:512])
+
+    def get_pitch(self, text):
+        pitch = list(map(int, text.replace('[','').replace(']','').split(',')))
+        #pitch = [ (i - 36) for i in pitch if i > 37 and i < 95 ]
+        return pitch 
 
     def get_text(self, text):
         text_norm = torch.IntTensor(text_to_sequence(text, self.text_cleaners))

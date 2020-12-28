@@ -1,2 +1,2 @@
-from audio.audio import audio_to_seq
+from audio.audio import Sequencer
 

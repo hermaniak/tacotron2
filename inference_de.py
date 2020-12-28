@@ -17,7 +17,6 @@ import scipy
 
 import time
 
-from audio import audio_to_seq
 from utils import load_wav_to_torch, load_filepaths_and_text
 
 def get_pitch(text):
